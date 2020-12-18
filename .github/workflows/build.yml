@@ -1,0 +1,30 @@
+name: Publish to GitHub Pages
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out
+        uses: actions/checkout@v1
+
+      - name: Generate your awesome content
+        run: |
+          npm install --save-dev
+          npx webpack
+          ls -larth
+          ls -larth dist/
+          # README
+          npm install markdown-to-html --save-dev
+          npx markdown README.md > dist/readme.html
+          cp -rf assets dist
+
+      - name: Deploy
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./dist
