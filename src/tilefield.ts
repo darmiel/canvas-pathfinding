@@ -25,7 +25,13 @@ class TileUpdater {
   }
 
   public onMove(mouseX: number, mouseY: number): boolean {
-    if (!this.hasLeft(mouseX - this.field.offset, mouseY - this.field.offset, false)) {
+    if (
+      !this.hasLeft(
+        mouseX - this.field.offset,
+        mouseY - this.field.offset,
+        false
+      )
+    ) {
       return false;
     }
 
@@ -37,7 +43,6 @@ class TileUpdater {
     const newTile = this.field.getTileAbsolute(mouseX, mouseY);
     if (newTile == null) {
       if (this.areaTile != null) {
-
         // From: old tile - offset
         // TODO: Change these two to Locaion#add
         this.from = new Location(
@@ -75,8 +80,6 @@ class TileUpdater {
 export class TileField extends TileContainer {
   // Mouse information
   public mouseDown = false;
-  private lastX = 0;
-  private lastY = 0;
   //
   public tileWidth: number;
   public tileHeight: number;
@@ -153,21 +156,23 @@ export class TileField extends TileContainer {
   ///////////////////////////////////////////////////////////////
   private registerListeners(): void {
     this.canvas.onmousemove = (event) => {
-      this.onMouseMove(event);
+      const x = event.clientX;
+      const y = event.clientY;
+
+      // Left current tile
+      this.tileUpdater.onMove(x, y);
+
+      this.emit("mousemove", event);
     };
     this.canvas.onkeydown = (event) => {
-      console.log(event);
+      this.emit("keydown", event);
     };
-  }
-  ///////////////////////////////////////////////////////////////
-  public onMouseMove(event: MouseEvent): void {
-    const x = event.clientX;
-    const y = event.clientY;
-
-    // Left current tile
-    if (this.tileUpdater.onMove(x, y)) {
-      // Something changed
-    }
+    this.canvas.onmousedown = (event) => {
+      this.emit("mousedown", event);
+    };
+    this.canvas.onmouseup = (event) => {
+      this.emit("mouseup", event);
+    };
   }
   ///////////////////////////////////////////////////////////////
 }
