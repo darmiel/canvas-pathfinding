@@ -1,5 +1,4 @@
 import { getRandomColor } from "./colors";
-import { Location } from "./location";
 
 export class Tile {
   constructor(
@@ -40,12 +39,5 @@ export class Tile {
 
   public updateRandomColor(ctx: CanvasRenderingContext2D): void {
     this.updateColor(ctx, getRandomColor());
-  }
-
-  public getAbsoluteLocation(offset: number): Location {
-    return {
-      x: this.x + offset,
-      y: this.y + offset
-    };
   }
 }

@@ -1,5 +1,6 @@
 import { EventEmitter } from "events";
 import { Tile } from "./tile";
+import { Location } from "./location";
 
 export abstract class TileContainer extends EventEmitter {
   public tiles: Tile[] = [];
@@ -7,6 +8,70 @@ export abstract class TileContainer extends EventEmitter {
   public abstract getTileAbsolute(x: number, y: number): Tile | null;
 }
 
+class TileUpdater {
+  private areaTile: Tile | null = null;
+
+  private from: Location = Location.empty();
+  private to: Location = Location.empty();
+
+  constructor(private field: TileField) {}
+
+  public hasLeft(x: number, y: number, absolute = false): boolean {
+    return (
+      this.from.isEmpty() ||
+      this.to.isEmpty() ||
+      !this.from.between(x, y, this.to, absolute)
+    );
+  }
+
+  public onMove(mouseX: number, mouseY: number): boolean {
+    if (!this.hasLeft(mouseX - this.field.offset, mouseY - this.field.offset, false)) {
+      return false;
+    }
+
+    if (this.areaTile != null) {
+      this.field.emit("leave", this.areaTile);
+    }
+
+    // Get new
+    const newTile = this.field.getTileAbsolute(mouseX, mouseY);
+    if (newTile == null) {
+      if (this.areaTile != null) {
+
+        // From: old tile - offset
+        // TODO: Change these two to Locaion#add
+        this.from = new Location(
+          this.areaTile.x - this.field.offset,
+          this.areaTile.y - this.field.offset,
+          this.field.offset
+        );
+
+        // To: old tile + offset
+        this.to = new Location(
+          this.areaTile.x + this.areaTile.width + this.field.offset,
+          this.areaTile.y + this.areaTile.height + this.field.offset,
+          this.field.offset
+        );
+      } else {
+        this.from = Location.empty();
+        this.to = Location.empty();
+      }
+    } else {
+      this.field.emit("enter", newTile);
+
+      this.from = new Location(newTile.x, newTile.y, this.field.offset);
+      this.to = new Location(
+        newTile.x + newTile.width,
+        newTile.y + newTile.height
+      );
+    }
+
+    this.areaTile = newTile;
+
+    // console.log(this.from, this.to);
+    return true;
+  }
+}
 export class TileField extends TileContainer {
   // Mouse information
   public mouseDown = false;
@@ -16,12 +81,7 @@ export class TileField extends TileContainer {
   public tileWidth: number;
   public tileHeight: number;
   //
-  private areaTile: Tile | null;
-  private areaFromX: number;
-  private areaFromY: number;
-  private areaToX: number;
-  private areaToY: number;
-  //
+  public tileUpdater: TileUpdater;
 
   constructor(
     public canvas: HTMLCanvasElement,
@@ -47,11 +107,7 @@ export class TileField extends TileContainer {
       (this.height - this.offset) / this.rows - this.offset
     );
 
-    this.areaTile = null;
-    this.areaFromX = this.width;
-    this.areaFromY = this.height;
-    this.areaToX = this.width;
-    this.areaToY = this.height;
+    this.tileUpdater = new TileUpdater(this);
 
     // Listeners
     this.registerListeners();
@@ -109,34 +165,8 @@ export class TileField extends TileContainer {
     const y = event.clientY;
 
     // Left current tile
-    if (
-      x < this.areaFromX ||
-      x > this.areaToX ||
-      y < this.areaFromY ||
-      y > this.areaToY
-    ) {
-      if (this.areaTile != null) {
-        this.emit("leave", this.areaTile);
-      }
-
-      const newTile = this.getTileAbsolute(x, y);
-
-      this.areaTile = newTile;
-      if (this.areaTile != null) {
-        const {x: absX, y: absY} = this.areaTile.getAbsoluteLocation(this.offset);
-
-        this.areaFromX = absX;
-        this.areaToX = absX + this.areaTile.width;
-        this.areaFromY = absY;
-        this.areaToY = absY + this.areaTile.height;
-
-        console.log(x, y, this.areaFromX, this.areaFromY);
-
-        this.emit("enter", this.areaTile);
-      } else {
-        this.areaFromX = this.width;
-        this.areaFromY = this.height;
-      }
+    if (this.tileUpdater.onMove(x, y)) {
+      // Something changed
     }
   }
   ///////////////////////////////////////////////////////////////
