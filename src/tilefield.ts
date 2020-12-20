@@ -3,7 +3,8 @@ import { Tile } from "./tile";
 
 export abstract class TileContainer extends EventEmitter {
   public tiles: Tile[] = [];
-  public abstract getTileAt(x: number, y: number): Tile | null;
+  public abstract getTileRelative(x: number, y: number): Tile | null;
+  public abstract getTileAbsolute(x: number, y: number): Tile | null;
 }
 
 export class TileField extends TileContainer {
@@ -14,6 +15,12 @@ export class TileField extends TileContainer {
   //
   public tileWidth: number;
   public tileHeight: number;
+  //
+  private areaTile: Tile | null;
+  private areaFromX: number;
+  private areaFromY: number;
+  private areaToX: number;
+  private areaToY: number;
   //
 
   constructor(
@@ -26,19 +33,25 @@ export class TileField extends TileContainer {
     public offset: number = 10
   ) {
     super();
-    // Init Canvas
 
     // Adjust canvas size and color
     this.canvas.height = this.height;
     this.canvas.width = this.width;
     this.canvas.style.background = "#000000";
 
+    // Calculate tile width and height based on the canvas' size
     this.tileWidth = Math.floor(
       (this.width - this.offset) / this.columns - this.offset
     );
     this.tileHeight = Math.floor(
       (this.height - this.offset) / this.rows - this.offset
     );
+
+    this.areaTile = null;
+    this.areaFromX = this.width;
+    this.areaFromY = this.height;
+    this.areaToX = this.width;
+    this.areaToY = this.height;
 
     // Listeners
     this.registerListeners();
@@ -69,7 +82,7 @@ export class TileField extends TileContainer {
   }
 
   ///////////////////////////////////////////////////////////////
-  public getTileAt(x: number, y: number): Tile | null {
+  public getTileRelative(x: number, y: number): Tile | null {
     for (const tile of this.tiles) {
       if (tile.isBelow(x, y)) {
         return tile;
@@ -77,73 +90,54 @@ export class TileField extends TileContainer {
     }
     return null;
   }
-  ///////////////////////////////////////////////////////////////
 
-
+  public getTileAbsolute(x: number, y: number): Tile | null {
+    return this.getTileRelative(x - this.offset, y - this.offset);
+  }
   ///////////////////////////////////////////////////////////////
   private registerListeners(): void {
-    this.canvas.onmousedown = (event) => {
-      this.onMouseDown(event);
-    };
-    this.canvas.onmouseup = (event) => {
-      this.onMouseUp(event);
-    };
     this.canvas.onmousemove = (event) => {
       this.onMouseMove(event);
     };
-  }
-
-  public mouseUpdate(x: number, y: number): Tile | null {
-    const clickedX = x - this.offset;
-    const clickedY = y - this.offset;
-
-    const tile = this.getTileAt(clickedX, clickedY);
-    if (tile == null) {
-      console.log("Updated no tile!");
-      return null;
-    }
-
-    console.log("Update:", tile);
-    tile.updateRandomColor(this.ctx);
-
-    return tile;
-  }
-
-  public onMouseDown(event: MouseEvent): void {
-    this.lastX = event.clientX;
-    this.lastY = event.clientY;
-
-    const updated = this.mouseUpdate(event.clientX, event.clientY);
-    if (updated != null) {
-      this.mouseDown = true;
-
-      // set last mouse location to tile center
-      this.lastX = updated.x + updated.width / 2;
-      this.lastY = updated.y + updated.height / 2;
-    }
-  }
-
-  public onMouseMove(event: MouseEvent): void {
-    if (!this.mouseDown) {
-      return;
-    }
-
-    if (
-      Math.abs(event.clientX - this.lastX) < this.tileWidth &&
-      Math.abs(event.clientY - this.lastY) < this.tileHeight
-    ) {
-      return;
-    }
-
-    this.lastX = event.clientX;
-    this.lastY = event.clientY;
-
-    this.mouseUpdate(this.lastX, this.lastY);
-  }
-
-  public onMouseUp(event: MouseEvent): void {
-    this.mouseDown = false;
+    this.canvas.onkeydown = (event) => {
+      console.log(event);
+    };
   }
   ///////////////////////////////////////////////////////////////
+  public onMouseMove(event: MouseEvent): void {
+    const x = event.clientX;
+    const y = event.clientY;
 
+    // Left current tile
+    if (
+      x < this.areaFromX ||
+      x > this.areaToX ||
+      y < this.areaFromY ||
+      y > this.areaToY
+    ) {
+      if (this.areaTile != null) {
+        this.emit("leave", this.areaTile);
+      }
+
+      const newTile = this.getTileAbsolute(x, y);
+
+      this.areaTile = newTile;
+      if (this.areaTile != null) {
+        const {x: absX, y: absY} = this.areaTile.getAbsoluteLocation(this.offset);
+
+        this.areaFromX = absX;
+        this.areaToX = absX + this.areaTile.width;
+        this.areaFromY = absY;
+        this.areaToY = absY + this.areaTile.height;
+
+        console.log(x, y, this.areaFromX, this.areaFromY);
+
+        this.emit("enter", this.areaTile);
+      } else {
+        this.areaFromX = this.width;
+        this.areaFromY = this.height;
+      }
+    }
+  }
+  ///////////////////////////////////////////////////////////////
 }
