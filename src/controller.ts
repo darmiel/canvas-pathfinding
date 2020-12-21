@@ -1,7 +1,7 @@
 import { TileField } from "./tilefield";
 import Swal from "sweetalert2";
 import { Tile } from "./tile";
-import { Pathfinder } from "./pathfinder";
+import { AStarPathfinder, Pathfinder } from "./pathfinder";
 
 export enum State {}
 export enum Selection {
@@ -13,15 +13,15 @@ export enum Selection {
 }
 
 export class Controller {
-  private selection: Selection = Selection.MARK_START_POINT;
+  public selection: Selection = Selection.MARK_START_POINT;
 
-  private startTile: Tile | null = null;
-  private endTile: Tile | null = null;
+  public startTile: Tile | null = null;
+  public endTile: Tile | null = null;
 
   private pathfinder: Pathfinder;
 
   constructor(public field: TileField) {
-    this.pathfinder = new Pathfinder(field, this);
+    this.pathfinder = new AStarPathfinder(field, this);
 
     // Update "Control Tiles"
     this.field.getTileMatrix(0, 0)?.updateColor("#2ecc71");
@@ -41,7 +41,7 @@ export class Controller {
         }
 
         showTimed(
-          1000,
+          100,
           "Updated Selection",
           "Selected: <strong>" +
             Selection[this.selection] +
@@ -61,6 +61,7 @@ export class Controller {
               Selection.MARK_START_POINT
             ) {
               this.startTile = tile;
+              this.pathfinder.onUpdateStart(this.startTile);
             } else {
               showTimed(1000, "Error", "Start-Tile not updated!");
             }
@@ -75,6 +76,7 @@ export class Controller {
               Selection.MARK_END_POINT
             ) {
               this.endTile = tile;
+              this.pathfinder.onUpdateEnd(this.endTile);
             } else {
               showTimed(1000, "Error", "End-Tile not updated!");
             }
@@ -85,6 +87,8 @@ export class Controller {
             break;
           }
           case Selection.START: {
+            this.pathfinder.start();
+            this.pathfinder.onMouseDown(event, tile);
           }
         }
       }

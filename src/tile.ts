@@ -6,7 +6,7 @@ export class Tile {
 
   constructor(
     public id: number, // should be unique
-    private ctx: CanvasRenderingContext2D,
+    public ctx: CanvasRenderingContext2D,
     public x: number,
     public y: number,
     public xId: number,
@@ -48,16 +48,12 @@ export class Tile {
   }
 
   public updateSelection(selection: Selection): Selection {
-    console.log("Selection:", selection, "Current Selection:", this.selection, "Same?", this.selection == selection);
-
     // revert
     if (selection == Selection.NONE || this.selection == selection) {
       this.selection = Selection.NONE;
       this.draw();
     } else {
       this.selection = selection;
-
-      console.log("Updating")
 
       switch (selection) {
         case Selection.MARK_START_POINT:
@@ -72,8 +68,6 @@ export class Tile {
           break;
       }
     }
-
-    console.log("New Selection:", this.selection);
 
     return this.selection;
   }

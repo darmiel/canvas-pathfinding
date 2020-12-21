@@ -125,19 +125,30 @@ export class TileField extends TileContainer {
     let yId = -1;
 
     for (
-      let x = this.offset;
-      x < this.width - this.offset;
-      x += this.tileWidth + this.offset
+      let y = this.offset;
+      y < this.height - this.offset;
+      y += this.tileHeight + this.offset
     ) {
-      xId++;
-      for (
-        let y = this.offset;
-        y < this.height - this.offset;
-        y += this.tileHeight + this.offset
-      ) {
-        yId++;
+      yId++;
+      xId = -1; // reset x
 
-        const tile = new Tile(id++, this.ctx, x, y, xId, yId, this.tileWidth, this.tileHeight);
+      for (
+        let x = this.offset;
+        x < this.width - this.offset;
+        x += this.tileWidth + this.offset
+      ) {
+        xId++;
+
+        const tile = new Tile(
+          id++,
+          this.ctx,
+          x,
+          y,
+          xId,
+          yId,
+          this.tileWidth,
+          this.tileHeight
+        );
         tile.updateColor("#EEEEEE");
 
         // save tile
