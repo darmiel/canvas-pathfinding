@@ -85,6 +85,7 @@ export class TileField extends TileContainer {
   public tileHeight: number;
   //
   public tileUpdater: TileUpdater;
+  public tileMatrix: Tile[][] = [];
 
   constructor(
     public canvas: HTMLCanvasElement,
@@ -119,25 +120,39 @@ export class TileField extends TileContainer {
   // creates the tiles
   public init(): void {
     let id = 0;
+
+    let xId = -1;
+    let yId = -1;
+
     for (
       let x = this.offset;
       x < this.width - this.offset;
       x += this.tileWidth + this.offset
     ) {
+      xId++;
       for (
         let y = this.offset;
         y < this.height - this.offset;
         y += this.tileHeight + this.offset
       ) {
-        const tile = new Tile(id++, x, y, this.tileWidth, this.tileHeight);
-        tile.updateColor(this.ctx, "#EEEEEE");
+        yId++;
+
+        const tile = new Tile(id++, this.ctx, x, y, xId, yId, this.tileWidth, this.tileHeight);
+        tile.updateColor("#EEEEEE");
 
         // save tile
         this.tiles.push(tile);
 
+        if (this.tileMatrix[xId] == null) {
+          this.tileMatrix[xId] = [];
+        }
+        this.tileMatrix[xId][yId] = tile;
+
         console.log("Filled rect:", x, y, this.tileWidth, this.tileHeight);
       }
     }
+
+    console.log(this.tileMatrix);
   }
 
   ///////////////////////////////////////////////////////////////
@@ -152,6 +167,10 @@ export class TileField extends TileContainer {
 
   public getTileAbsolute(x: number, y: number): Tile | null {
     return this.getTileRelative(x - this.offset, y - this.offset);
+  }
+
+  public getTileMatrix(x: number, y: number): Tile | null {
+    return (this.tileMatrix[x] ?? [])[y] ?? null;
   }
   ///////////////////////////////////////////////////////////////
   private registerListeners(): void {

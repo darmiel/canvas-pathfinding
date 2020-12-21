@@ -1,3 +1,4 @@
+import { Controller } from "./controller";
 import { Tile } from "./tile";
 import { TileField } from "./tilefield";
 
@@ -16,22 +17,24 @@ class Startup {
     const field = new TileField(canvas, ctx, width, height, 13);
     field.init();
 
-    field.on("enter", (tile: Tile) => {
-      tile.updateRandomColor(ctx);
-      console.log("+", tile);
-    });
+    const controller = new Controller(field);
 
-    field.on("leave", (tile: Tile) => {
-      tile.draw(ctx);
-      console.log("-", tile);
-    });
-
-    field.on("mousedown", (event: MouseEvent) => {
-      const tile = field.getTileAbsolute(event.clientX, event.clientY);
-      if (tile != null) {
-        tile.updateRandomColor(ctx);
-      }
-    });
+    //field.on("enter", (tile: Tile) => {
+    //  tile.updateRandomColor(ctx);
+    //  console.log("+", tile);
+    //});
+//
+    //field.on("leave", (tile: Tile) => {
+    //  tile.draw(ctx);
+    //  console.log("-", tile);
+    //});
+//
+    //field.on("mousedown", (event: MouseEvent) => {
+    //  const tile = field.getTileAbsolute(event.clientX, event.clientY);
+    //  if (tile != null) {
+    //    tile.updateRandomColor(ctx);
+    //  }
+    //});
   }
 }
 
