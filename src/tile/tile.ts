@@ -29,7 +29,11 @@ export class Tile {
     );
   }
 
-  public updateColor(color: string, debug = false, includeParents = false): void {
+  public updateColor(
+    color: string,
+    debug = false,
+    includeParents = false
+  ): void {
     if (debug) {
       console.log(`[Tile #${this.id}]: Changing color to ${color}`);
     }
@@ -48,8 +52,12 @@ export class Tile {
     }
   }
 
-  public updateRandomColor(): void {
-    this.updateColor(getRandomColor());
+  public updateRandomColor(includeParents = false, vibrantOnly = false): void {
+    this.updateColor(getRandomColor(vibrantOnly));
+
+    if (includeParents && this.parent != null) {
+      this.parent.updateRandomColor(includeParents);
+    }
   }
 
   public updateSelection(selection: Selection): Selection {
@@ -95,5 +103,4 @@ export class Tile {
 
     return this.parent.getPathLength() + 1;
   }
-
 }

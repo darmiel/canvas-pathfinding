@@ -2,7 +2,7 @@ import Swal from "sweetalert2";
 import { Tile } from "../../tile/tile";
 import { TileField } from "../../tile/tilefield";
 import { Pathfinder } from "../pathfinder.a";
-import { Controller } from "../../controller";
+import { Controller, Selection } from "../../controller";
 import { findNeighbours, getTileWithLowestFCost } from "./astar.utils";
 
 export class AStarPathfinder extends Pathfinder {
@@ -12,6 +12,7 @@ export class AStarPathfinder extends Pathfinder {
   /* Settings */
   public delay = 50;
   public strave = false;
+  public rainbow = false;
 
   constructor(public field: TileField, public controller: Controller) {
     super(field, controller);
@@ -85,7 +86,19 @@ export class AStarPathfinder extends Pathfinder {
         this.started = false;
         this.found = true;
 
-        this.controller.endTile.updateColor("#0000FF", false, true);
+        // Easteregg
+        if (this.rainbow) {
+          // Make the background colors more pale
+          this.open.forEach((open) => open.updateColor("#BBFFFF"));
+          this.closed.forEach((open) => open.updateColor("#FFBBFF"));
+          this.controller.field.tiles
+            .filter((tile) => tile.selection == Selection.OBSTACLES)
+            .forEach((tile) => tile.updateColor("FFFFFF"));
+
+          this.controller.endTile.updateRandomColor(true, true);
+        } else {
+          this.controller.endTile.updateColor("#0000FF", false, true);
+        }
 
         Swal.fire({
           title: ":)",

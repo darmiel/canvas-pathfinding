@@ -14,7 +14,7 @@ class Startup {
         html: "Canvas not found.",
         icon: "error"
       });
-      
+
       return;
     }
 
@@ -31,7 +31,10 @@ class Startup {
         controller.pathfinder.delay = parseInt(params.get("delay") ?? "50");
       }
       if (params.has("strave")) {
-        controller.pathfinder.strave = (params.get("strave") ?? "false") == "true";
+        controller.pathfinder.strave = true;
+      }
+      if (params.has("rainbow")) {
+        controller.pathfinder.rainbow = true;
       }
     }
   }
