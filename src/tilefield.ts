@@ -149,7 +149,7 @@ export class TileField extends TileContainer {
           this.tileWidth,
           this.tileHeight
         );
-        tile.updateColor("#EEEEEE");
+        tile.updateColor("#EEEEEE", false);
 
         // save tile
         this.tiles.push(tile);

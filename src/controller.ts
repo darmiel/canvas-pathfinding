@@ -53,9 +53,9 @@ export class Controller {
           case Selection.MARK_START_POINT: {
             console.log("Start tile:", this.startTile);
             if (this.startTile != null) {
-              console.log("Found!");
               this.startTile.updateSelection(Selection.NONE);
             }
+            
             if (
               tile.updateSelection(Selection.MARK_START_POINT) ==
               Selection.MARK_START_POINT

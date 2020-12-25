@@ -21,127 +21,143 @@ export abstract class Pathfinder extends EventEmitter {
 }
 
 export class AStarPathfinder extends Pathfinder {
-  public open: Tile[] = [];
-  public closed: Tile[] = [];
+  public open: Set<Tile> = new Set();
+  public closed: Set<Tile> = new Set();
 
   constructor(public field: TileField, public controller: Controller) {
     super(field, controller);
   }
 
+  private resetValues(): void {
+    this.open.clear();
+    this.closed.clear();
+  }
+
   public onUpdateStart(tile: Tile): void {
-    this.open = [];
-    this.closed = [];
-    this.open.push(tile);
+    this.resetValues();
+    this.open.add(tile);
+
+    console.log("Updated start with tile:", tile, "open:", this.open);
   }
   public onUpdateEnd(tile: Tile): void {
-    this.open = [];
-    this.closed = [];
+    //this.resetValues();
   }
 
-  public onMouseDown(event: MouseEvent, tile: Tile): void {
-    if (this.controller.endTile == null || this.controller.startTile == null) {
-      Swal.fire("Error", "No Start or End marker set!");
+  public async onMouseDown(event: MouseEvent, tile: Tile) {
+    if (this.controller.startTile == null || this.controller.endTile == null) {
+      alert("Start or end missing!");
       return;
     }
 
-    const { xId: x, yId: y } = tile;
-    console.log("x and y:", x, y);
+    for (let i = 0; i < 25; i++) {
 
-    // non-open node clicked
-    if (!this.open.includes(tile)) {
-      Swal.fire("Warning", "Non-Open Node clicked!");
-      return;
-    }
+      await new Promise((accept) => {
+        setTimeout(() => {
+          accept("");
+        }, 500);
+      });
 
-    // remove from open
-    {
-      const index = this.open.indexOf(tile);
-      if (index !== -1) {
-        this.open.splice(index, 1);
-      } else {
-        Swal.fire("Warning", "Did not remove open node!");
+      // h cost = distance from end
+      // g cost = distance from start
+      // f cost = g cost + h cost
+      const current = this.getTileWithLowestFCost();
+      if (current == null) {
+        alert("Something went horribly wrong!");
+        return;
       }
-    }
+      console.log("Current with lowest f-cost:", current);
 
-    // add node to closed nodes
-    this.closed.push(tile);
+      // make tile red
+      current.updateColor("#FF0000", false);
 
-    // change color to red
-    tile.updateColor("#FF0000");
+      // remove current from open
+      this.open.delete(current);
 
-    // print f_ and g_ cost
-    this.calcAndDraw(tile);
+      // add current to closed
+      this.closed.add(current);
 
-    // if node is the end node, exit
-    if (tile == this.controller.endTile) {
-      this.started = false;
-      Swal.fire("Found!");
-      this.emit("finished", true);
-      return;
-    }
-
-    // open all nodes around
-    for (const nb of this.findNb(x, y)) {
-
-      // check if neighbour was already checked
-      if (this.closed.includes(nb)) {
-        continue;
+      // check if target node has been found
+      if (current == this.controller.endTile) {
+        this.controller.endTile.updateColor("#0000FF", false, true);
+        alert("Found!");
+        return;
       }
 
-      // change color to green
-      nb.updateColor("#00FF00");
-
-      // print f_ and g_ cost
-      this.calcAndDraw(nb);
-
-      this.open.push(nb);
-    }
-  }
-
-  private calcAndDraw(tile: Tile) {
-    if (this.controller.endTile == null || this.controller.startTile == null) {
-      return;
-    }
-
-    const { xId: x, yId: y, height } = tile;
-
-    const fCost = Math.floor(
-      Math.sqrt(
-        Math.pow(Math.abs(x - this.controller.endTile.xId), 2) +
-          Math.pow(Math.abs(y - this.controller.endTile.yId), 2)
-      ) * 10
-    );
-    const gCost = Math.floor(
-      Math.sqrt(
-        Math.pow(Math.abs(x - this.controller.startTile.xId), 2) +
-          Math.pow(Math.abs(y - this.controller.startTile.yId), 2)
-      ) * 10
-    );
-    tile.ctx.fillStyle = "#000000";
-    tile.ctx.font = "20px courier";
-    tile.ctx.fillText("" + fCost, tile.x + 5, tile.y + height / 2 - 10);
-    tile.ctx.fillText("" + gCost, tile.x + 5, tile.y + height / 2 + 20);
-  }
-
-  private findNb(x: number, y: number): Tile[] {
-    const res: Tile[] = [];
-
-    for (let i = 0; i < 3; i++) {
-      for (let j = 0; j < 3; j++) {
-        if (i == 1 && j == 1) {
-          console.log("ignored center");
-          // center
+      let pl = -1;
+      for (const neighbour of this.findNeighbours(current)) {
+        // check if already closed
+        if (this.closed.has(neighbour)) {
           continue;
         }
 
-        const _x = x - 1 + i;
-        const _y = y - 1 + j;
+        const pathLength = neighbour.getPathLength() + 1;
+        const isInOpen = this.open.has(neighbour);
+        if (pl == -1 || pl > pathLength || !isInOpen) {
+          pl = pathLength;
 
-        console.log(_x, _y);
+          // set parent to current
+          neighbour.parent = current;
 
-        const tile = this.field.getTileMatrix(_x, _y);
+          // if neighbour is not in open -> add
+          if (!isInOpen) {
+            this.open.add(neighbour);
+
+            // make tile green
+            neighbour.updateColor("#00FF00");
+          }
+        }
+      }
+    }
+  }
+
+  public getTileWithLowestFCost(): Tile | null {
+  
+    let cost = -1;
+    let lt: Tile | null = null;
+
+    this.open.forEach((tile) => {
+      console.log("Checking:", tile);
+      if (this.controller.startTile == null || this.controller.endTile == null) {
+        return;
+      }
+
+      const f = tile.fCost(this.controller.startTile, this.controller.endTile);
+      console.log("F-Cost:", f);
+      if (cost == -1 || cost > f) {
+        cost = f;
+        lt = tile;
+      }
+    });
+
+    console.log("Res:", cost, lt);
+
+    return lt;
+  }
+
+  private findNeighbours(tile: Tile, skipObstacles = true): Tile[] {
+    const res: Tile[] = [];
+
+    const x = tile.xId;
+    const y = tile.yId;
+
+    for (let i = 0; i < 3; i++) {
+      for (let j = 0; j < 3; j++) {
+        // skip center (clicked)
+        if (i == 1 && j == 1) {
+          continue;
+        }
+
+        const tile = this.field.getTileMatrix(x - 1 + i, y - 1 + j);
+
         if (tile != null) {
-          console.log(" -> Found tile!");
+          // check if tile is obstacle
+          if (skipObstacles && tile.selection != Selection.NONE) {
+            // INCLUDE end node
+            if (tile.selection != Selection.MARK_END_POINT) {
+              continue;
+            }
+          }
+
           res.push(tile);
         }
       }

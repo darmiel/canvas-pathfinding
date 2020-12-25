@@ -3,6 +3,7 @@ import { Selection } from "./controller";
 
 export class Tile {
   public selection: Selection = Selection.NONE;
+  public parent: Tile | null = null;
 
   constructor(
     public id: number, // should be unique
@@ -28,7 +29,7 @@ export class Tile {
     );
   }
 
-  public updateColor(color: string, debug = true): void {
+  public updateColor(color: string, debug = true, includeParents = false): void {
     if (debug) {
       console.log(`[Tile #${this.id}]: Changing color to ${color}`);
     }
@@ -41,6 +42,10 @@ export class Tile {
 
     // reset fill style
     this.ctx.fillStyle = oldFillStyle;
+
+    if (includeParents && this.parent != null) {
+      this.parent.updateColor(color, debug, includeParents);
+    }
   }
 
   public updateRandomColor(): void {
@@ -57,7 +62,7 @@ export class Tile {
 
       switch (selection) {
         case Selection.MARK_START_POINT:
-          console.log("update color und so")
+          console.log("update color und so");
           this.updateColor("#e67e22");
           break;
         case Selection.MARK_END_POINT:
@@ -71,4 +76,25 @@ export class Tile {
 
     return this.selection;
   }
+
+  public niceDistanceTo(tile: Tile): number {
+    return Math.floor(
+      Math.sqrt(
+        Math.pow(tile.xId - this.xId, 2) + Math.pow(tile.yId - this.yId, 2)
+      ) * 10
+    );
+  }
+
+  public fCost(start: Tile, end: Tile): number {
+    return this.niceDistanceTo(start) + this.niceDistanceTo(end);
+  }
+
+  public getPathLength(): number {
+    if (this.parent == null) {
+      return 1;
+    }
+
+    return this.parent.getPathLength() + 1;
+  }
+
 }
