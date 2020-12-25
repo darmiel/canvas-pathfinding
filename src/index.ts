@@ -1,14 +1,20 @@
+import Swal from "sweetalert2";
 import { Controller } from "./controller";
-import { AStarPathfinder } from "./pathfinder";
-import { Tile } from "./tile";
-import { TileField } from "./tilefield";
+import { AStarPathfinder } from "./pathfinders/a-star/astar.pathfinder";
+import { TileField } from "./tile/tilefield";
 
 class Startup {
   public static main(): void {
     const canvas = <HTMLCanvasElement>document.getElementById("canvas");
     const ctx = canvas.getContext("2d");
     if (canvas == null || ctx == null) {
-      console.log("Canvas not found.");
+
+      Swal.fire({
+        title: "Error",
+        html: "Canvas not found.",
+        icon: "error"
+      });
+      
       return;
     }
 
@@ -24,24 +30,10 @@ class Startup {
       if (params.has("delay")) {
         controller.pathfinder.delay = parseInt(params.get("delay") ?? "50");
       }
+      if (params.has("strave")) {
+        controller.pathfinder.strave = (params.get("strave") ?? "false") == "true";
+      }
     }
-
-    //field.on("enter", (tile: Tile) => {
-    //  tile.updateRandomColor(ctx);
-    //  console.log("+", tile);
-    //});
-//
-    //field.on("leave", (tile: Tile) => {
-    //  tile.draw(ctx);
-    //  console.log("-", tile);
-    //});
-//
-    //field.on("mousedown", (event: MouseEvent) => {
-    //  const tile = field.getTileAbsolute(event.clientX, event.clientY);
-    //  if (tile != null) {
-    //    tile.updateRandomColor(ctx);
-    //  }
-    //});
   }
 }
 

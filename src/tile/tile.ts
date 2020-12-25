@@ -1,5 +1,5 @@
-import { getRandomColor } from "./colors";
-import { Selection } from "./controller";
+import { getRandomColor } from "../colors";
+import { Selection } from "../controller";
 
 export class Tile {
   public selection: Selection = Selection.NONE;
@@ -29,7 +29,7 @@ export class Tile {
     );
   }
 
-  public updateColor(color: string, debug = true, includeParents = false): void {
+  public updateColor(color: string, debug = false, includeParents = false): void {
     if (debug) {
       console.log(`[Tile #${this.id}]: Changing color to ${color}`);
     }
@@ -62,7 +62,6 @@ export class Tile {
 
       switch (selection) {
         case Selection.MARK_START_POINT:
-          console.log("update color und so");
           this.updateColor("#e67e22");
           break;
         case Selection.MARK_END_POINT:
