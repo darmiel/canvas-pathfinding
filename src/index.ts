@@ -1,4 +1,5 @@
 import { Controller } from "./controller";
+import { AStarPathfinder } from "./pathfinder";
 import { Tile } from "./tile";
 import { TileField } from "./tilefield";
 
@@ -18,6 +19,12 @@ class Startup {
     field.init();
 
     const controller = new Controller(field);
+    if (controller.pathfinder instanceof AStarPathfinder) {
+      const params = new URLSearchParams(location.search);
+      if (params.has("delay")) {
+        controller.pathfinder.delay = parseInt(params.get("delay") ?? "50");
+      }
+    }
 
     //field.on("enter", (tile: Tile) => {
     //  tile.updateRandomColor(ctx);

@@ -18,7 +18,7 @@ export class Controller {
   public startTile: Tile | null = null;
   public endTile: Tile | null = null;
 
-  private pathfinder: Pathfinder;
+  public pathfinder: Pathfinder;
 
   constructor(public field: TileField) {
     this.pathfinder = new AStarPathfinder(field, this);
@@ -55,7 +55,7 @@ export class Controller {
             if (this.startTile != null) {
               this.startTile.updateSelection(Selection.NONE);
             }
-            
+
             if (
               tile.updateSelection(Selection.MARK_START_POINT) ==
               Selection.MARK_START_POINT

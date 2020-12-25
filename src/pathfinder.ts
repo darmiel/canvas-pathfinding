@@ -24,6 +24,8 @@ export class AStarPathfinder extends Pathfinder {
   public open: Set<Tile> = new Set();
   public closed: Set<Tile> = new Set();
 
+  public delay = 50;
+
   constructor(public field: TileField, public controller: Controller) {
     super(field, controller);
   }
@@ -49,12 +51,13 @@ export class AStarPathfinder extends Pathfinder {
       return;
     }
 
-    for (let i = 0; i < 25; i++) {
+    for (;;) {
 
+      // ugly hack atm
       await new Promise((accept) => {
         setTimeout(() => {
           accept("");
-        }, 500);
+        }, this.delay);
       });
 
       // h cost = distance from end
