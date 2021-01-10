@@ -121,7 +121,7 @@ export class AStarPathfinder extends Pathfinder {
           continue;
         }
 
-        const pathLength = neighbour.getPathLength() + 1;
+        const pathLength = neighbour.getPathLength() /* + 1 */;
         const isInOpen = this.open.has(neighbour);
         if (pl == -1 || pathLength < pl || !isInOpen) {
           pl = pathLength;
