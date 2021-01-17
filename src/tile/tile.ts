@@ -4,6 +4,8 @@ import { Selection } from "../controller";
 export class Tile {
   public selection: Selection = Selection.NONE;
   public parent: Tile | null = null;
+  public distToStart: number = 0;
+  public distToEnd: number = 0;
 
   constructor(
     public id: number, // should be unique
@@ -43,7 +45,10 @@ export class Tile {
 
     this.ctx.fillStyle = color; //white
     this.ctx.fillRect(this.x, this.y, this.width, this.height);
-
+    this.ctx.fillStyle = "#000000";
+    this.ctx.fillText(`${this.distToStart}`,this.x + 5,this.y + 10);
+    this.ctx.fillText(`${this.distToEnd}`,this.x + this.width - 20,this.y + 10);
+    
     // reset fill style
     this.ctx.fillStyle = oldFillStyle;
 
@@ -93,14 +98,17 @@ export class Tile {
   }
 
   public fCost(start: Tile, end: Tile): number {
-    return this.niceDistanceTo(start) + this.niceDistanceTo(end);
+    const cost : number = this.getPathLength() + this.niceDistanceTo(end)
+    this.distToStart = this.getPathLength()
+    this.distToEnd = this.niceDistanceTo(end)
+    return cost;
   }
 
   public getPathLength(): number {
     if (this.parent == null) {
-      return 1;
+      return 0;
     }
 
-    return this.parent.getPathLength() + 1;
+    return this.parent.getPathLength() + 10;
   }
 }
